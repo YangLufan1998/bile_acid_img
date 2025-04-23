@@ -11,7 +11,7 @@ This repository contains code and analysis for exploring how different bile acid
 - [Installation](#installation)  
 - [Usage](#usage)  
 - [Output](#output)  
-- [Directory Structure](#directory-structure)  
+
 
 ## Overview
 
@@ -31,6 +31,10 @@ You can install everything at once:
 pip install numpy matplotlib scikit-image cellpose
 ```
 ## Usage
+ python cell_count.py ./Bile\ Acid\ BMDM\ Images --output_csv ./cell_counts.csv --annotate_dir ./annotated_images
 
-
+## Output
+all labeled figure in annotated_images folder
+cell counts in cell_count.csv
+statistic analysis in R markdown format
 
