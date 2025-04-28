@@ -1,0 +1,82 @@
+---
+title: "image_analysis"
+author: "Lufan_Yang"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Analysis of image data
+
+```{r}
+library(ggplot2)
+library(glmmTMB)
+library(emmeans)
+library(car)
+library(dplyr)
+```
+
+```{r}
+cells <- read.csv("/Users/lufanyang/Desktop/ansc499/bile_acid_img/cell_counts.csv")
+cells$filename <- gsub(cells$filename, pattern = ".tiff", replacement = "")
+rownames(cells) <- cells$filename
+cells$type <- as.factor(unlist(lapply(strsplit(cells$filename, split = "_"), function(x) x[1])))
+cells$treatment <- as.factor(unlist(lapply(strsplit(cells$filename, split = "_"), function(x) x[2])))
+cells$rep <- as.factor(unlist(lapply(strsplit(cells$filename, split = "_"), function(x) x[3])))
+cells$position <- as.factor(unlist(lapply(strsplit(cells$filename, split = "_"), function(x) x[4])))
+cells$treatment <- relevel(cells$treatment, ref = "DMSO")
+cells$combo <- interaction(cells$type, cells$treatment, sep = "_")
+levels(cells$combo) 
+```
+
+```{r}
+model <- glmmTMB(cell_count ~ combo + (1|rep) + (1|position), family = "poisson", data = cells)
+summary(model)
+emm <- emmeans(model, ~ combo, type = "response")
+summary(emm)
+pairs(emm)
+```
+
+
+
+```{r}
+cells_M1 <- subset(cells, cells$type == "M1")
+cells_M1$treatment <- relevel(cells_M1$treatment, ref = "DMSO")
+model2 <- glmmTMB(cell_count ~ treatment + (1|rep) + (1|position), family = "poisson", data = cells_M1)
+summary(model2)
+
+emm_M1 <- emmeans(model2, ~ treatment, type = "response")
+summary(emm_M1)
+pairs(emm_M1)
+```
+
+```{r}
+```
+
+```{r}
+cells_M2 <- subset(cells, cells$type == "M2")
+cells_M2$treatment <- relevel(cells_M2$treatment, ref = "DMSO")
+model3 <- glmmTMB(cell_count ~ treatment + (1|rep) + (1|position), family = "poisson", data = cells_M2)
+summary(model3)
+
+emm_M2 <- emmeans(model3, ~ treatment, type = "response")
+summary(emm_M2)
+
+pairs(emm_M2)
+```
+
+```{r}
+model_type <- glmmTMB(
+  cell_count ~ type + (1|rep) + (1|position),
+  family = poisson,
+  data = cells
+)
+
+emm_type <- emmeans(model_type, ~ type, type = "response")
+summary(emm_type)
+
+pairs(emm_type)
+```
+
