@@ -357,26 +357,23 @@ display: none;
 
 <div id="analysis-of-image-data" class="section level2">
 <h2>Analysis of image data</h2>
-<pre class="r"><code>library(ggplot2)
-library(glmmTMB)
+<pre class="r"><code>library(glmmTMB)
 library(emmeans)</code></pre>
 <pre><code>## Welcome to emmeans.
 ## Caution: You lose important information if you filter this package&#39;s results.
 ## See &#39;? untidy&#39;</code></pre>
-<pre class="r"><code>library(car)</code></pre>
-<pre><code>## Loading required package: carData</code></pre>
-<pre class="r"><code>library(dplyr)</code></pre>
+<pre class="r"><code>library(ggplot2)
+library(ggpubr)
+library(dplyr)</code></pre>
 <pre><code>## 
 ## Attaching package: &#39;dplyr&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:car&#39;:
-## 
-##     recode</code></pre>
 <pre><code>## The following objects are masked from &#39;package:stats&#39;:
 ## 
 ##     filter, lag</code></pre>
 <pre><code>## The following objects are masked from &#39;package:base&#39;:
 ## 
 ##     intersect, setdiff, setequal, union</code></pre>
+<pre class="r"><code>library(tidyr)</code></pre>
 <pre class="r"><code>cells &lt;- read.csv(&quot;/Users/lufanyang/Desktop/ansc499/bile_acid_img/cell_counts.csv&quot;)
 cells$filename &lt;- gsub(cells$filename, pattern = &quot;.tiff&quot;, replacement = &quot;&quot;)
 rownames(cells) &lt;- cells$filename
@@ -390,26 +387,26 @@ levels(cells$combo) </code></pre>
 <pre><code>##  [1] &quot;M0_DMSO&quot;  &quot;M1_DMSO&quot;  &quot;M2_DMSO&quot;  &quot;M0_ALCA&quot;  &quot;M1_ALCA&quot;  &quot;M2_ALCA&quot; 
 ##  [7] &quot;M0_IALCA&quot; &quot;M1_IALCA&quot; &quot;M2_IALCA&quot; &quot;M0_ILCA&quot;  &quot;M1_ILCA&quot;  &quot;M2_ILCA&quot; 
 ## [13] &quot;M0_LCA&quot;   &quot;M1_LCA&quot;   &quot;M2_LCA&quot;</code></pre>
-<pre class="r"><code>model &lt;- glmmTMB(cell_count ~ combo + (1|rep) + (1|position), family = &quot;poisson&quot;, data = cells)
+<pre class="r"><code>model &lt;- glmmTMB(cell_count ~ combo + (1|rep/position) , family = &quot;poisson&quot;, data = cells)
 summary(model)</code></pre>
 <pre><code>##  Family: poisson  ( log )
-## Formula:          cell_count ~ combo + (1 | rep) + (1 | position)
+## Formula:          cell_count ~ combo + (1 | rep/position)
 ## Data: cells
 ## 
 ##       AIC       BIC    logLik -2*log(L)  df.resid 
-##    4599.0    4638.1   -2286.5    4573.0       137 
+##    4459.9    4499.1   -2217.0    4433.9       137 
 ## 
 ## Random effects:
 ## 
 ## Conditional model:
-##  Groups   Name        Variance Std.Dev.
-##  rep      (Intercept) 0.002944 0.05426 
-##  position (Intercept) 0.016625 0.12894 
-## Number of obs: 150, groups:  rep, 3; position, 5
+##  Groups       Name        Variance  Std.Dev. 
+##  position:rep (Intercept) 1.955e-02 1.398e-01
+##  rep          (Intercept) 1.141e-09 3.378e-05
+## Number of obs: 150, groups:  position:rep, 15; rep, 3
 ## 
 ## Conditional model:
 ##               Estimate Std. Error z value Pr(&gt;|z|)    
-## (Intercept)    6.14885    0.06669   92.20  &lt; 2e-16 ***
+## (Intercept)    6.14793    0.03801  161.74  &lt; 2e-16 ***
 ## comboM1_DMSO  -0.23965    0.01790  -13.39  &lt; 2e-16 ***
 ## comboM2_DMSO   0.22838    0.01592   14.35  &lt; 2e-16 ***
 ## comboM1_ALCA  -0.14069    0.01742   -8.08 6.74e-16 ***
@@ -417,25 +414,25 @@ summary(model)</code></pre>
 ## comboM1_IALCA -0.15410    0.01749   -8.81  &lt; 2e-16 ***
 ## comboM2_IALCA  0.26499    0.01579   16.78  &lt; 2e-16 ***
 ## comboM1_ILCA   0.07187    0.01651    4.35 1.34e-05 ***
-## comboM2_ILCA   0.32932    0.02186   15.07  &lt; 2e-16 ***
+## comboM2_ILCA   0.32937    0.02186   15.07  &lt; 2e-16 ***
 ## comboM1_LCA    0.17225    0.01612   10.68  &lt; 2e-16 ***
-## comboM2_LCA    0.34022    0.01726   19.71  &lt; 2e-16 ***
+## comboM2_LCA    0.34019    0.01727   19.70  &lt; 2e-16 ***
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <pre class="r"><code>emm &lt;- emmeans(model, ~ combo, type = &quot;response&quot;)
 summary(emm)</code></pre>
 <pre><code>##  combo    rate   SE  df asymp.LCL asymp.UCL
-##  M0_DMSO   468 31.2 Inf       411       534
-##  M1_DMSO   368 24.7 Inf       323       420
-##  M2_DMSO   588 39.1 Inf       516       670
-##  M1_ALCA   407 27.2 Inf       357       464
-##  M2_ALCA   656 43.5 Inf       576       747
-##  M1_IALCA  401 26.8 Inf       352       458
-##  M2_IALCA  610 40.5 Inf       536       695
-##  M1_ILCA   503 33.5 Inf       441       573
-##  M2_ILCA   651 44.3 Inf       569       744
-##  M1_LCA    556 37.0 Inf       488       634
-##  M2_LCA    658 44.0 Inf       577       750
+##  M0_DMSO   468 17.8 Inf       434       504
+##  M1_DMSO   368 14.2 Inf       341       397
+##  M2_DMSO   588 22.1 Inf       546       633
+##  M1_ALCA   406 15.6 Inf       377       438
+##  M2_ALCA   655 24.5 Inf       609       705
+##  M1_IALCA  401 15.4 Inf       372       432
+##  M2_IALCA  610 22.9 Inf       566       656
+##  M1_ILCA   503 19.0 Inf       467       541
+##  M2_ILCA   650 26.3 Inf       601       704
+##  M1_LCA    556 21.0 Inf       516       598
+##  M2_LCA    657 25.1 Inf       610       708
 ## 
 ## Confidence level used: 0.95 
 ## Intervals are back-transformed from the log scale</code></pre>
@@ -448,9 +445,9 @@ summary(emm)</code></pre>
 ##  M0_DMSO / M1_IALCA  1.167 0.0204 Inf    1   8.813  &lt;.0001
 ##  M0_DMSO / M2_IALCA  0.767 0.0121 Inf    1 -16.780  &lt;.0001
 ##  M0_DMSO / M1_ILCA   0.931 0.0154 Inf    1  -4.354  0.0007
-##  M0_DMSO / M2_ILCA   0.719 0.0157 Inf    1 -15.067  &lt;.0001
+##  M0_DMSO / M2_ILCA   0.719 0.0157 Inf    1 -15.068  &lt;.0001
 ##  M0_DMSO / M1_LCA    0.842 0.0136 Inf    1 -10.684  &lt;.0001
-##  M0_DMSO / M2_LCA    0.712 0.0123 Inf    1 -19.706  &lt;.0001
+##  M0_DMSO / M2_LCA    0.712 0.0123 Inf    1 -19.704  &lt;.0001
 ##  M1_DMSO / M2_DMSO   0.626 0.0107 Inf    1 -27.406  &lt;.0001
 ##  M1_DMSO / M1_ALCA   0.906 0.0167 Inf    1  -5.353  &lt;.0001
 ##  M1_DMSO / M2_ALCA   0.562 0.0094 Inf    1 -34.438  &lt;.0001
@@ -459,177 +456,87 @@ summary(emm)</code></pre>
 ##  M1_DMSO / M1_ILCA   0.732 0.0129 Inf    1 -17.674  &lt;.0001
 ##  M1_DMSO / M2_ILCA   0.566 0.0129 Inf    1 -25.049  &lt;.0001
 ##  M1_DMSO / M1_LCA    0.662 0.0114 Inf    1 -23.855  &lt;.0001
-##  M1_DMSO / M2_LCA    0.560 0.0103 Inf    1 -31.621  &lt;.0001
+##  M1_DMSO / M2_LCA    0.560 0.0103 Inf    1 -31.619  &lt;.0001
 ##  M2_DMSO / M1_ALCA   1.446 0.0240 Inf    1  22.266  &lt;.0001
 ##  M2_DMSO / M2_ALCA   0.897 0.0131 Inf    1  -7.423  &lt;.0001
 ##  M2_DMSO / M1_IALCA  1.466 0.0244 Inf    1  22.983  &lt;.0001
 ##  M2_DMSO / M2_IALCA  0.964 0.0143 Inf    1  -2.465  0.3254
 ##  M2_DMSO / M1_ILCA   1.169 0.0183 Inf    1  10.027  &lt;.0001
-##  M2_DMSO / M2_ILCA   0.904 0.0192 Inf    1  -4.764  0.0001
+##  M2_DMSO / M2_ILCA   0.904 0.0192 Inf    1  -4.766  0.0001
 ##  M2_DMSO / M1_LCA    1.058 0.0161 Inf    1   3.692  0.0101
-##  M2_DMSO / M2_LCA    0.894 0.0147 Inf    1  -6.816  &lt;.0001
+##  M2_DMSO / M2_LCA    0.894 0.0147 Inf    1  -6.814  &lt;.0001
 ##  M1_ALCA / M2_ALCA   0.620 0.0101 Inf    1 -29.427  &lt;.0001
 ##  M1_ALCA / M1_IALCA  1.014 0.0183 Inf    1   0.741  0.9997
 ##  M1_ALCA / M2_IALCA  0.667 0.0110 Inf    1 -24.656  &lt;.0001
 ##  M1_ALCA / M1_ILCA   0.809 0.0139 Inf    1 -12.401  &lt;.0001
 ##  M1_ALCA / M2_ILCA   0.625 0.0140 Inf    1 -21.040  &lt;.0001
 ##  M1_ALCA / M1_LCA    0.731 0.0123 Inf    1 -18.661  &lt;.0001
-##  M1_ALCA / M2_LCA    0.618 0.0110 Inf    1 -26.910  &lt;.0001
+##  M1_ALCA / M2_LCA    0.618 0.0110 Inf    1 -26.907  &lt;.0001
 ##  M2_ALCA / M1_IALCA  1.634 0.0266 Inf    1  30.129  &lt;.0001
 ##  M2_ALCA / M2_IALCA  1.074 0.0155 Inf    1   4.962  &lt;.0001
 ##  M2_ALCA / M1_ILCA   1.303 0.0199 Inf    1  17.385  &lt;.0001
-##  M2_ALCA / M2_ILCA   1.007 0.0211 Inf    1   0.355  1.0000
+##  M2_ALCA / M2_ILCA   1.007 0.0211 Inf    1   0.352  1.0000
 ##  M2_ALCA / M1_LCA    1.179 0.0175 Inf    1  11.100  &lt;.0001
-##  M2_ALCA / M2_LCA    0.997 0.0160 Inf    1  -0.217  1.0000
+##  M2_ALCA / M2_LCA    0.997 0.0160 Inf    1  -0.216  1.0000
 ##  M1_IALCA / M2_IALCA 0.658 0.0109 Inf    1 -25.369  &lt;.0001
 ##  M1_IALCA / M1_ILCA  0.798 0.0137 Inf    1 -13.135  &lt;.0001
-##  M1_IALCA / M2_ILCA  0.617 0.0138 Inf    1 -21.592  &lt;.0001
+##  M1_IALCA / M2_ILCA  0.617 0.0138 Inf    1 -21.593  &lt;.0001
 ##  M1_IALCA / M1_LCA   0.722 0.0121 Inf    1 -19.385  &lt;.0001
-##  M1_IALCA / M2_LCA   0.610 0.0109 Inf    1 -27.566  &lt;.0001
+##  M1_IALCA / M2_LCA   0.610 0.0109 Inf    1 -27.563  &lt;.0001
 ##  M2_IALCA / M1_ILCA  1.213 0.0188 Inf    1  12.476  &lt;.0001
-##  M2_IALCA / M2_ILCA  0.938 0.0198 Inf    1  -3.050  0.0820
+##  M2_IALCA / M2_ILCA  0.938 0.0198 Inf    1  -3.052  0.0815
 ##  M2_IALCA / M1_LCA   1.097 0.0165 Inf    1   6.154  &lt;.0001
-##  M2_IALCA / M2_LCA   0.928 0.0151 Inf    1  -4.620  0.0002
-##  M1_ILCA / M2_ILCA   0.773 0.0167 Inf    1 -11.901  &lt;.0001
+##  M2_IALCA / M2_LCA   0.928 0.0151 Inf    1  -4.618  0.0002
+##  M1_ILCA / M2_ILCA   0.773 0.0167 Inf    1 -11.902  &lt;.0001
 ##  M1_ILCA / M1_LCA    0.904 0.0143 Inf    1  -6.347  &lt;.0001
-##  M1_ILCA / M2_LCA    0.765 0.0130 Inf    1 -15.805  &lt;.0001
-##  M2_ILCA / M1_LCA    1.170 0.0250 Inf    1   7.360  &lt;.0001
-##  M2_ILCA / M2_LCA    0.989 0.0226 Inf    1  -0.477  1.0000
-##  M1_LCA / M2_LCA     0.845 0.0140 Inf    1 -10.115  &lt;.0001
+##  M1_ILCA / M2_LCA    0.765 0.0130 Inf    1 -15.803  &lt;.0001
+##  M2_ILCA / M1_LCA    1.170 0.0250 Inf    1   7.362  &lt;.0001
+##  M2_ILCA / M2_LCA    0.989 0.0226 Inf    1  -0.474  1.0000
+##  M1_LCA / M2_LCA     0.845 0.0140 Inf    1 -10.113  &lt;.0001
 ## 
 ## P value adjustment: tukey method for comparing a family of 11 estimates 
 ## Tests are performed on the log scale</code></pre>
-<pre class="r"><code>cells_M1 &lt;- subset(cells, cells$type == &quot;M1&quot;)
-cells_M1$treatment &lt;- relevel(cells_M1$treatment, ref = &quot;DMSO&quot;)
-model2 &lt;- glmmTMB(cell_count ~ treatment + (1|rep) + (1|position), family = &quot;poisson&quot;, data = cells_M1)
-summary(model2)</code></pre>
-<pre><code>##  Family: poisson  ( log )
-## Formula:          cell_count ~ treatment + (1 | rep) + (1 | position)
-## Data: cells_M1
-## 
-##       AIC       BIC    logLik -2*log(L)  df.resid 
-##    2369.3    2385.6   -1177.7    2355.3        68 
-## 
-## Random effects:
-## 
-## Conditional model:
-##  Groups   Name        Variance Std.Dev.
-##  rep      (Intercept) 0.00117  0.03421 
-##  position (Intercept) 0.03950  0.19874 
-## Number of obs: 75, groups:  rep, 3; position, 5
-## 
-## Conditional model:
-##                Estimate Std. Error z value Pr(&gt;|z|)    
-## (Intercept)     5.89867    0.09203   64.09  &lt; 2e-16 ***
-## treatmentALCA   0.09896    0.01849    5.35 8.67e-08 ***
-## treatmentIALCA  0.08555    0.01855    4.61 3.98e-06 ***
-## treatmentILCA   0.31152    0.01763   17.67  &lt; 2e-16 ***
-## treatmentLCA    0.41190    0.01727   23.86  &lt; 2e-16 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<pre class="r"><code>emm_M1 &lt;- emmeans(model2, ~ treatment, type = &quot;response&quot;)
-summary(emm_M1)</code></pre>
-<pre><code>##  treatment rate   SE  df asymp.LCL asymp.UCL
-##  DMSO       365 33.6 Inf       304       437
-##  ALCA       402 37.0 Inf       336       482
-##  IALCA      397 36.5 Inf       332       476
-##  ILCA       498 45.7 Inf       416       596
-##  LCA        550 50.5 Inf       460       659
-## 
-## Confidence level used: 0.95 
-## Intervals are back-transformed from the log scale</code></pre>
-<pre class="r"><code>pairs(emm_M1)</code></pre>
-<pre><code>##  contrast     ratio     SE  df null z.ratio p.value
-##  DMSO / ALCA  0.906 0.0167 Inf    1  -5.353  &lt;.0001
-##  DMSO / IALCA 0.918 0.0170 Inf    1  -4.612  &lt;.0001
-##  DMSO / ILCA  0.732 0.0129 Inf    1 -17.674  &lt;.0001
-##  DMSO / LCA   0.662 0.0114 Inf    1 -23.855  &lt;.0001
-##  ALCA / IALCA 1.014 0.0183 Inf    1   0.741  0.9467
-##  ALCA / ILCA  0.809 0.0139 Inf    1 -12.401  &lt;.0001
-##  ALCA / LCA   0.731 0.0123 Inf    1 -18.661  &lt;.0001
-##  IALCA / ILCA 0.798 0.0137 Inf    1 -13.135  &lt;.0001
-##  IALCA / LCA  0.722 0.0121 Inf    1 -19.385  &lt;.0001
-##  ILCA / LCA   0.904 0.0143 Inf    1  -6.347  &lt;.0001
-## 
-## P value adjustment: tukey method for comparing a family of 5 estimates 
-## Tests are performed on the log scale</code></pre>
-<pre class="r"><code>cells_M2 &lt;- subset(cells, cells$type == &quot;M2&quot;)
-cells_M2$treatment &lt;- relevel(cells_M2$treatment, ref = &quot;DMSO&quot;)
-model3 &lt;- glmmTMB(cell_count ~ treatment + (1|rep) + (1|position), family = &quot;poisson&quot;, data = cells_M2)
-summary(model3)</code></pre>
-<pre><code>##  Family: poisson  ( log )
-## Formula:          cell_count ~ treatment + (1 | rep) + (1 | position)
-## Data: cells_M2
-## 
-##       AIC       BIC    logLik -2*log(L)  df.resid 
-##    1370.4    1385.0    -678.2    1356.4        53 
-## 
-## Random effects:
-## 
-## Conditional model:
-##  Groups   Name        Variance Std.Dev.
-##  rep      (Intercept) 0.004133 0.06429 
-##  position (Intercept) 0.011353 0.10655 
-## Number of obs: 60, groups:  rep, 3; position, 5
-## 
-## Conditional model:
-##                Estimate Std. Error z value Pr(&gt;|z|)    
-## (Intercept)     6.37932    0.06133  104.02  &lt; 2e-16 ***
-## treatmentALCA   0.10835    0.01460    7.42 1.15e-13 ***
-## treatmentIALCA  0.03661    0.01485    2.46   0.0137 *  
-## treatmentILCA   0.10321    0.02215    4.66 3.18e-06 ***
-## treatmentLCA    0.11072    0.01671    6.63 3.46e-11 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<pre class="r"><code>emm_M2 &lt;- emmeans(model3, ~ treatment, type = &quot;response&quot;)
-summary(emm_M2)</code></pre>
-<pre><code>##  treatment rate   SE  df asymp.LCL asymp.UCL
-##  DMSO       590 36.2 Inf       523       665
-##  ALCA       657 40.2 Inf       583       741
-##  IALCA      612 37.5 Inf       542       690
-##  ILCA       654 41.5 Inf       577       740
-##  LCA        659 40.7 Inf       583       743
-## 
-## Confidence level used: 0.95 
-## Intervals are back-transformed from the log scale</code></pre>
-<pre class="r"><code>pairs(emm_M2)</code></pre>
-<pre><code>##  contrast     ratio     SE  df null z.ratio p.value
-##  DMSO / ALCA  0.897 0.0131 Inf    1  -7.423  &lt;.0001
-##  DMSO / IALCA 0.964 0.0143 Inf    1  -2.465  0.0987
-##  DMSO / ILCA  0.902 0.0200 Inf    1  -4.659  &lt;.0001
-##  DMSO / LCA   0.895 0.0150 Inf    1  -6.626  &lt;.0001
-##  ALCA / IALCA 1.074 0.0155 Inf    1   4.962  &lt;.0001
-##  ALCA / ILCA  1.005 0.0220 Inf    1   0.235  0.9993
-##  ALCA / LCA   0.998 0.0163 Inf    1  -0.145  0.9999
-##  IALCA / ILCA 0.936 0.0206 Inf    1  -3.019  0.0214
-##  IALCA / LCA  0.929 0.0154 Inf    1  -4.467  0.0001
-##  ILCA / LCA   0.993 0.0246 Inf    1  -0.303  0.9982
-## 
-## P value adjustment: tukey method for comparing a family of 5 estimates 
-## Tests are performed on the log scale</code></pre>
-<pre class="r"><code>model_type &lt;- glmmTMB(
-  cell_count ~ type + (1|rep) + (1|position),
-  family = poisson,
-  data = cells
-)
+<pre class="r"><code>p &lt;- ggplot(cells, aes(x = treatment, y = cell_count, fill = treatment)) +
+  geom_violin(trim = FALSE) +
+  geom_boxplot(width = 0.1, outlier.size = 0, alpha = 0.5) +
+  geom_jitter(width = 0.1, alpha = 0.5) +
+ facet_wrap(~ type, scales = &quot;free_y&quot;, nrow = 1) +
 
-emm_type &lt;- emmeans(model_type, ~ type, type = &quot;response&quot;)
-summary(emm_type)</code></pre>
-<pre><code>##  type rate   SE  df asymp.LCL asymp.UCL
-##  M0    468 31.2 Inf       411       534
-##  M1    447 29.5 Inf       393       509
-##  M2    627 41.3 Inf       551       714
-## 
-## Confidence level used: 0.95 
-## Intervals are back-transformed from the log scale</code></pre>
-<pre class="r"><code>pairs(emm_type)</code></pre>
-<pre><code>##  contrast ratio      SE  df null z.ratio p.value
-##  M0 / M1  1.047 0.01370 Inf    1   3.519  0.0013
-##  M0 / M2  0.746 0.00966 Inf    1 -22.625  &lt;.0001
-##  M1 / M2  0.713 0.00533 Inf    1 -45.317  &lt;.0001
-## 
-## P value adjustment: tukey method for comparing a family of 3 estimates 
-## Tests are performed on the log scale</code></pre>
+  labs(
+    x = NULL,
+    y = &quot;Cell count per image&quot;,
+    title = &quot;Cell number distributions under bile acid treatments&quot;
+  ) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = &quot;bold&quot;, size = 20),
+    axis.title.x = element_text(face = &quot;bold&quot;, size = 16),
+    axis.title.y = element_text(face = &quot;bold&quot;, size = 16),
+    axis.text.x = element_text(face = &quot;bold&quot;, size = 14),
+    axis.text.y = element_text(face = &quot;bold&quot;, size = 14),
+    legend.position = &quot;none&quot;,
+    strip.background = element_rect(fill = &quot;#EEEEEE&quot;),
+    strip.text = element_text(face = &quot;bold&quot;, size = 16)
+  )</code></pre>
+<pre class="r"><code>p2 &lt;- ggplot(subset(cells,treatment==&quot;DMSO&quot;), aes(x = type, y = cell_count,fill = type)) +
+  geom_boxplot(width = 0.5, outlier.size = 0, alpha = 0.5) +
+  geom_jitter(width = 0.1, alpha = 0.5) +
+  labs(
+    x = NULL,
+    y = &quot;Cell count per image&quot;,
+    title = &quot;Cell number distributions under three cell type&quot;
+  ) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = &quot;bold&quot;, size = 20),
+    axis.title.x = element_text(face = &quot;bold&quot;, size = 16),
+    axis.title.y = element_text(face = &quot;bold&quot;, size = 16),
+    axis.text.x = element_text(face = &quot;bold&quot;, size = 14),
+    axis.text.y = element_text(face = &quot;bold&quot;, size = 14),
+    legend.position = &quot;none&quot;,
+    strip.background = element_rect(fill = &quot;#EEEEEE&quot;),
+    strip.text = element_text(face = &quot;bold&quot;, size = 16)
+  )</code></pre>
 </div>
 
 

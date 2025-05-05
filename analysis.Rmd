@@ -11,11 +11,12 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Analysis of image data
 
 ```{r}
-library(ggplot2)
 library(glmmTMB)
 library(emmeans)
-library(car)
+library(ggplot2)
+library(ggpubr)
 library(dplyr)
+library(tidyr)
 ```
 
 ```{r}
@@ -32,51 +33,61 @@ levels(cells$combo)
 ```
 
 ```{r}
-model <- glmmTMB(cell_count ~ combo + (1|rep) + (1|position), family = "poisson", data = cells)
+model <- glmmTMB(cell_count ~ combo + (1|rep/position) , family = "poisson", data = cells)
 summary(model)
 emm <- emmeans(model, ~ combo, type = "response")
 summary(emm)
 pairs(emm)
 ```
 
+```{r}
+
+p <- ggplot(cells, aes(x = treatment, y = cell_count, fill = treatment)) +
+  geom_violin(trim = FALSE) +
+  geom_boxplot(width = 0.1, outlier.size = 0, alpha = 0.5) +
+  geom_jitter(width = 0.1, alpha = 0.5) +
+ facet_wrap(~ type, scales = "free_y", nrow = 1) +
+
+  labs(
+    x = NULL,
+    y = "Cell count per image",
+    title = "Cell number distributions under bile acid treatments"
+  ) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 20),
+    axis.title.x = element_text(face = "bold", size = 16),
+    axis.title.y = element_text(face = "bold", size = 16),
+    axis.text.x = element_text(face = "bold", size = 14),
+    axis.text.y = element_text(face = "bold", size = 14),
+    legend.position = "none",
+    strip.background = element_rect(fill = "#EEEEEE"),
+    strip.text = element_text(face = "bold", size = 16)
+  )
+```
+
 
 
 ```{r}
-cells_M1 <- subset(cells, cells$type == "M1")
-cells_M1$treatment <- relevel(cells_M1$treatment, ref = "DMSO")
-model2 <- glmmTMB(cell_count ~ treatment + (1|rep) + (1|position), family = "poisson", data = cells_M1)
-summary(model2)
-
-emm_M1 <- emmeans(model2, ~ treatment, type = "response")
-summary(emm_M1)
-pairs(emm_M1)
+p2 <- ggplot(subset(cells,treatment=="DMSO"), aes(x = type, y = cell_count,fill = type)) +
+  geom_boxplot(width = 0.5, outlier.size = 0, alpha = 0.5) +
+  geom_jitter(width = 0.1, alpha = 0.5) +
+  labs(
+    x = NULL,
+    y = "Cell count per image",
+    title = "Cell number distributions under three cell type"
+  ) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 20),
+    axis.title.x = element_text(face = "bold", size = 16),
+    axis.title.y = element_text(face = "bold", size = 16),
+    axis.text.x = element_text(face = "bold", size = 14),
+    axis.text.y = element_text(face = "bold", size = 14),
+    legend.position = "none",
+    strip.background = element_rect(fill = "#EEEEEE"),
+    strip.text = element_text(face = "bold", size = 16)
+  )
 ```
 
-```{r}
-```
-
-```{r}
-cells_M2 <- subset(cells, cells$type == "M2")
-cells_M2$treatment <- relevel(cells_M2$treatment, ref = "DMSO")
-model3 <- glmmTMB(cell_count ~ treatment + (1|rep) + (1|position), family = "poisson", data = cells_M2)
-summary(model3)
-
-emm_M2 <- emmeans(model3, ~ treatment, type = "response")
-summary(emm_M2)
-
-pairs(emm_M2)
-```
-
-```{r}
-model_type <- glmmTMB(
-  cell_count ~ type + (1|rep) + (1|position),
-  family = poisson,
-  data = cells
-)
-
-emm_type <- emmeans(model_type, ~ type, type = "response")
-summary(emm_type)
-
-pairs(emm_type)
-```
 
